@@ -1,27 +1,29 @@
 package sigcont
 
 /*
-extern void RegisterSIGCONTHandler();
-extern int FetchSIGCONTStatus();
+extern int RegisterSIGCONTHandler();
+extern int WaitForSIGCONT();
 */
 import "C"
 
 import (
 	"os"
 	"syscall"
-	"time"
 )
 
 func Notify(sigch chan os.Signal) {
-	C.RegisterSIGCONTHandler()
+	if ret := int(C.RegisterSIGCONTHandler()); ret < 0 {
+		panic("already registered SIGCONT handler. You can only call this once.")
+	}
 
 	go func() {
 		for {
-			time.Sleep(50 * time.Millisecond)
-			status := int(C.FetchSIGCONTStatus())
-			if status > 0 {
-				sigch <- syscall.SIGCONT
+			ret := C.WaitForSIGCONT()
+			if ret < 0 {
+				// error
+				continue
 			}
+			sigch <- syscall.SIGCONT
 		}
 	}()
 
