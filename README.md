@@ -3,7 +3,10 @@
 Go, for reasons unbeknownst to me, can't trap `SIGCONT`. This library allows
 you to trap `SIGCONT`. It uses `cgo`.
 
-Right now it polls every 50 milliseconds for stupid reasons. I should change this.
+Go gets unhappy if you call into a Go function from a signal handler, so the
+implementation creates a pipe, writes to it from the handler, and spawns a
+goroutine to push a `syscall.SIGCONT` to the channel each time data is received
+on the pipe.
 
 ## Usage:
 
